@@ -1,0 +1,33 @@
+# --- Node general ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# --- Vite / build ---
+dist/
+.cache/
+*.local
+.env
+.env.local
+.env.development
+.env.production
+.vite/
+
+# --- Archivos del sistema ---
+.DS_Store
+Thumbs.db
+
+# --- Configuración de editor ---
+.vscode/
+.idea/
+
+# --- Test / cobertura ---
+coverage/
+*.test.js
+*.spec.js
+
+# --- Service worker cache (si se genera localmente) ---
+sw.js
+workbox-*.js
