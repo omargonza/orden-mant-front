@@ -9,6 +9,7 @@ package-lock.json
 dist/
 .cache/
 *.local
+.env*
 .env
 .env.local
 .env.development
