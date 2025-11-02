@@ -4,7 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: './',
-
   plugins: [
     react(),
     VitePWA({
@@ -19,26 +18,19 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          {
-            src: '/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
       },
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.destination === 'document' ||
-                                         request.destination === 'script' ||
-                                         request.destination === 'style' ||
-                                         request.destination === 'image' ||
-                                         request.destination === 'font',
+            urlPattern: ({ request }) =>
+              request.destination === 'document' ||
+              request.destination === 'script' ||
+              request.destination === 'style' ||
+              request.destination === 'image' ||
+              request.destination === 'font',
             handler: 'CacheFirst',
             options: {
               cacheName: 'assets-cache',
@@ -48,5 +40,16 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+
+  // 🟢 Proxy para redirigir /api al backend Django en local
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
