@@ -1,72 +1,380 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+import React, { useState, useEffect } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import Select from "react-select";
+import "./form.css";
 
-export default defineConfig({
-  // 🔸 Base relativa: evita errores de rutas en Render
-  base: './',
+const API = import.meta.env.VITE_BACKEND_URL || "";
 
-  plugins: [
-    react(),
-    // 🔹 Configuración de PWA
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
-      manifest: {
-        name: 'Orden de Trabajo',
-        short_name: 'OT Mantenimiento',
-        description: 'Formulario digital de orden de trabajo Ausol',
-        theme_color: '#1976d2',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
-          {
-            src: '/icon-192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icon-512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      },
-      // 🔹 Cache para uso offline
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: ({ request }) =>
-              request.destination === 'document' ||
-              request.destination === 'script' ||
-              request.destination === 'style' ||
-              request.destination === 'image' ||
-              request.destination === 'font',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'assets-cache',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
-            }
-          }
-        ]
-      }
-    })
-  ],
+// 🔹 Agrupaciones de tableros (resumen completo de Ausol)
+const tableros = [
+  {
+    label: "Gral. Paz – Acceso Norte / La Noria",
+    options: [
+      { value: "TI 1400", label: "TI 1400" },
+      { value: "TI 1300", label: "TI 1300" },
+      { value: "TI 1200", label: "TI 1200" },
+      { value: "TI 1100", label: "TI 1100" },
+      { value: "TI 1000", label: "TI 1000" },
+      { value: "TI 900", label: "TI 900" },
+      { value: "Tablero Cámara 1", label: "Tablero Cámara 1" },
+      { value: "Tablero Cámara 2", label: "Tablero Cámara 2" },
+      { value: "TI 800", label: "TI 800" },
+      { value: "TI 700", label: "TI 700" },
+      { value: "TI 600", label: "TI 600" },
+      { value: "TI 500", label: "TI 500" },
+      { value: "TI 400", label: "TI 400" },
+      { value: "TI 300", label: "TI 300" },
+      { value: "TI 200", label: "TI 200" },
+      { value: "TI 100", label: "TI 100" },
+      { value: "TI 47 Provincias Unidas", label: "TI 47 Provincias Unidas" },
+      { value: "Tuyuti", label: "Tuyuti" },
+      { value: "Ibarrola", label: "Ibarrola" },
+      { value: "Amadeo Jacques", label: "Amadeo Jacques" },
+      { value: "Madrid", label: "Madrid" },
+      { value: "San Cayetano", label: "San Cayetano" },
+      { value: "J.J. Paso", label: "J.J. Paso" },
+      { value: "San Ignacio", label: "San Ignacio" },
+      { value: "Croacia", label: "Croacia" },
+    ],
+  },
+  {
+    label: "Acceso Norte – General Paz / Lugones",
+    options: [
+      { value: "TI 40 Superi", label: "TI 40 Superi" },
+      { value: "TI 41 Zapiola", label: "TI 41 Zapiola" },
+      { value: "TI 42 Cabildo", label: "TI 42 Cabildo" },
+      { value: "TI 43 11 de Septiembre", label: "TI 43 11 de Septiembre" },
+      { value: "Tab Grecia", label: "Tab Grecia" },
+    ],
+  },
+  {
+    label: "Acceso Norte – Marquez / Bifurcación",
+    options: [
+      { value: "TI 34 Marquez I", label: "TI 34 Marquez I" },
+      { value: "TI 35 Marquez II", label: "TI 35 Marquez II" },
+      { value: "TI 32 Rolon I", label: "TI 32 Rolon I" },
+      { value: "TI 33 Rolon II", label: "TI 33 Rolon II" },
+      { value: "Tab Sucre", label: "Tab Sucre" },
+      { value: "TG 093 Gardel", label: "TG 093 Gardel" },
+      { value: "TG 099 Carlos Tejedor", label: "TG 099 Carlos Tejedor" },
+      { value: "TG 111 Camino Moron", label: "TG 111 Camino Moron" },
+      { value: "TGBA03 Buen Aire", label: "TGBA03 Buen Aire" },
+      { value: "TGBA05 Ezequiel", label: "TGBA05 Ezequiel" },
+      { value: "TG147 Boulogne", label: "TG147 Boulogne" },
+      { value: "TG165 Pacheco", label: "TG165 Pacheco" },
+      { value: "TG177 Reconquista", label: "TG177 Reconquista" },
+      { value: "TG195 Bifurcación", label: "TG195 Bifurcación" },
+    ],
+  },
+  {
+    label: "Ramal Campana",
+    options: [
+      { value: "TC02 Gutiérrez", label: "TC02 Gutiérrez" },
+      { value: "TC04 Constituyentes", label: "TC04 Constituyentes" },
+      { value: "TC06 Alvear", label: "TC06 Alvear" },
+      { value: "TC10 Ruta 9", label: "TC10 Ruta 9" },
+      { value: "TC24 Escobar II", label: "TC24 Escobar II" },
+      { value: "TC39 Río Luján", label: "TC39 Río Luján" },
+      { value: "TC42 Los Cardales", label: "TC42 Los Cardales" },
+      { value: "TC58 Campana", label: "TC58 Campana" },
+    ],
+  },
+  {
+    label: "Ramal Pilar",
+    options: [
+      { value: "TP02 Carnot", label: "TP02 Carnot" },
+      { value: "TP06 Constituyentes", label: "TP06 Constituyentes" },
+      { value: "TP09 Ruta 26", label: "TP09 Ruta 26" },
+      { value: "TP14 Los Lagartos", label: "TP14 Los Lagartos" },
+      { value: "TP21 Ricchieri", label: "TP21 Ricchieri" },
+      { value: "TP27 J.J. Paso", label: "TP27 J.J. Paso" },
+      { value: "TP30 Pilar", label: "TP30 Pilar" },
+    ],
+  },
+  {
+    label: "Ramal Tigre",
+    options: [
+      { value: "TT1 Blanco Encalada", label: "TT1 Blanco Encalada" },
+      { value: "TT3 Guido", label: "TT3 Guido" },
+      { value: "TT6 Avellaneda", label: "TT6 Avellaneda" },
+      { value: "TT9 Carupá", label: "TT9 Carupá" },
+      { value: "TT12 Tigre Centro", label: "TT12 Tigre Centro" },
+    ],
+  },
+  {
+    label: "Estaciones de Peaje",
+    options: [
+      { value: "Peaje Debenedetti ASC", label: "Peaje Debenedetti ASC" },
+      { value: "Peaje Debenedetti DESC", label: "Peaje Debenedetti DESC" },
+      { value: "Peaje Márquez ASC", label: "Peaje Márquez ASC" },
+      { value: "Peaje Márquez DESC", label: "Peaje Márquez DESC" },
+      { value: "Peaje Tigre Troncal", label: "Peaje Tigre Troncal" },
+      { value: "Peaje Pilar Troncal", label: "Peaje Pilar Troncal" },
+      { value: "Peaje Campana Troncal", label: "Peaje Campana Troncal" },
+    ],
+  },
+];
 
-  // 🔹 Proxy local: redirige /api al backend de Django
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000', // backend local Django
-        changeOrigin: true,
-        secure: false,
-      },
+export default function App() {
+  const [theme, setTheme] = useState("system");
+
+  // 🔄 Detectar y aplicar tema guardado o automático
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) setTheme(saved);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") root.classList.add("dark");
+    else if (theme === "light") root.classList.remove("dark");
+    else {
+      // automático según sistema
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) root.classList.add("dark");
+      else root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) =>
+      prev === "light" ? "dark" : prev === "dark" ? "system" : "light"
+    );
+  };
+
+  // 🧾 Formulario principal
+  const { register, control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      fecha: new Date().toISOString().slice(0, 10),
+      centro_costos: "",
+      ubicacion: "",
+      tipo_mantenimiento: "Correctivo",
+      prioridad: "Normal",
+      tarea: "",
+      observaciones: "",
+      tableros: [],
+      circuitos: "",
+      hora_inicio: "08:00",
+      hora_fin: "12:00",
+      legajos: [{ id: "", nombre: "" }],
+      materiales: [],
     },
-  },
+  });
 
-  // (Opcional) si querés que Render muestre logs detallados
-  build: {
-    sourcemap: false,
-  },
-});
+  const legajos = useFieldArray({ control, name: "legajos" });
+  const materiales = useFieldArray({ control, name: "materiales" });
+
+  const onSubmit = async (data) => {
+    try {
+      const res = await fetch(`${API}/api/ordenes/pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) return alert("Error al generar PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "orden_trabajo.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("No se pudo conectar con el servidor.");
+    }
+  };
+
+  return (
+      <>
+  <div className="header-bar">Orden de Trabajo</div>
+
+    <div className="form-container">
+      <h1>Orden de Trabajo</h1>
+
+      {/* 🌓 Botón flotante de tema */}
+      <button className="theme-toggle" onClick={toggleTheme}>
+        {theme === "light" && "🌞"}
+        {theme === "dark" && "🌙"}
+        {theme === "system" && "🖥️"}
+      </button>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="form-body">
+        {/* Datos generales */}
+        <section className="section">
+          <h3>Datos generales</h3>
+          <div className="grid-2">
+            <label>
+              Fecha
+              <input type="date" {...register("fecha")} />
+            </label>
+            <label>
+              Centro de costos
+              <input type="text" {...register("centro_costos")} />
+            </label>
+            <label>
+              Ubicación
+              <input type="text" {...register("ubicacion")} />
+            </label>
+            <label>
+              Tipo de mantenimiento
+              <select {...register("tipo_mantenimiento")}>
+                <option>Preventivo</option>
+                <option>Correctivo</option>
+                <option>Obras nuevas</option>
+              </select>
+            </label>
+            <label>
+              Prioridad
+              <select {...register("prioridad")}>
+                <option>Normal</option>
+                <option>Urgente</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {/* Título y descripción */}
+        <section className="section">
+          <h3>Título de la tarea</h3>
+          <input
+            type="text"
+            className="full-input"
+            placeholder="Ej: Cambio de alimentador"
+            {...register("tarea")}
+          />
+        </section>
+
+        <section className="section">
+          <h3>Descripción de la tarea</h3>
+          <textarea
+            rows={5}
+            className="full-input"
+            placeholder="Describa las acciones realizadas..."
+            {...register("observaciones")}
+          />
+        </section>
+
+        {/* Tableros */}
+        <section className="section">
+          <h3>Tableros y Circuito</h3>
+          <label>Tableros intervenidos</label>
+          <Controller
+            name="tableros"
+            control={control}
+            render={({ field }) => (
+              <Select
+                isMulti
+                options={tableros}
+                placeholder="Buscar tablero..."
+                value={(field.value || []).map((v) => ({ value: v, label: v }))}
+                onChange={(vals) => field.onChange(vals.map((v) => v.value))}
+              />
+            )}
+          />
+          <label>Circuito</label>
+          <input
+            type="text"
+            className="full-input"
+            placeholder="FD2, alumbrado exterior…"
+            {...register("circuitos")}
+          />
+        </section>
+
+        {/* Horarios y técnicos */}
+        <section className="section">
+          <h3>Horarios y Técnicos</h3>
+          <div className="grid-2">
+            <label>
+              Hora inicio
+              <input type="time" {...register("hora_inicio")} />
+            </label>
+            <label>
+              Hora fin
+              <input type="time" {...register("hora_fin")} />
+            </label>
+          </div>
+
+          <h4>Legajos</h4>
+          {legajos.fields.map((f, idx) => (
+            <div key={f.id} className="flex-row">
+              <input placeholder="ID" {...register(`legajos.${idx}.id`)} />
+              <input
+                placeholder="Nombre"
+                {...register(`legajos.${idx}.nombre`)}
+              />
+              <button
+                type="button"
+                className="btn-remove"
+                onClick={() => legajos.remove(idx)}
+              >
+                ❌
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn-add"
+            onClick={() => legajos.append({ id: "", nombre: "" })}
+          >
+            ➕ Agregar legajo
+          </button>
+        </section>
+
+        {/* Materiales */}
+        <section className="section">
+          <h3>Materiales</h3>
+          {materiales.fields.map((f, idx) => (
+            <div key={f.id} className="grid-4">
+              <input
+                placeholder="Material"
+                {...register(`materiales.${idx}.material`)}
+              />
+              <input
+                placeholder="Cant."
+                type="number"
+                step="0.01"
+                {...register(`materiales.${idx}.cant`)}
+              />
+              <input
+                placeholder="Unidad"
+                {...register(`materiales.${idx}.unidad`)}
+              />
+              <button
+                type="button"
+                className="btn-remove"
+                onClick={() => materiales.remove(idx)}
+              >
+                ❌
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="btn-add"
+            onClick={() =>
+              materiales.append({ material: "", cant: 1, unidad: "un" })
+            }
+          >
+            ➕ Agregar material
+          </button>
+        </section>
+
+        {/* Botones finales */}
+        <div className="btn-group">
+          <button type="submit" className="btn-primary">
+            📄 Generar PDF
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => reset()}
+          >
+            🧹 Limpiar
+          </button>
+        </div>
+      </form>
+    </div>
+      </>
+  );
+}
