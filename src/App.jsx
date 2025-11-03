@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useToast } from "./context/ToastContext";
 import Select from "react-select";
 import "./form.css";
 
@@ -114,8 +115,8 @@ const tableros = [
     ],
   },
 ];
-
 export default function App() {
+  const { showToast } = useToast(); // 👈 Hook del contexto de toasts
   const [theme, setTheme] = useState("system");
 
   // 🔄 Detectar y aplicar tema guardado o automático
@@ -129,7 +130,6 @@ export default function App() {
     if (theme === "dark") root.classList.add("dark");
     else if (theme === "light") root.classList.remove("dark");
     else {
-      // automático según sistema
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       if (prefersDark) root.classList.add("dark");
       else root.classList.remove("dark");
@@ -165,16 +165,38 @@ export default function App() {
   const legajos = useFieldArray({ control, name: "legajos" });
   const materiales = useFieldArray({ control, name: "materiales" });
 
+  // ✅ Envío de datos al backend y descarga del PDF
   const onSubmit = async (data) => {
     console.log("Datos que se envían al backend:", data);
 
+    const payload = {
+      ...data,
+      materiales: (data.materiales || []).map((m) => ({
+        ...m,
+        cant: m.cant === "" || m.cant == null ? null : Number(m.cant),
+      })),
+      legajos: (data.legajos || []).map((l) => ({
+        id: l.id?.toString() || "",
+        nombre: l.nombre || "",
+      })),
+    };
+
     try {
+      showToast("⏳ Generando PDF...", "info");
+
       const res = await fetch(`${API}/api/ordenes/pdf`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) return alert("Error al generar PDF");
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("❌ Error del backend:", err);
+        showToast("❌ Error al generar PDF. Revisá los datos.", "error");
+        return;
+      }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -182,201 +204,207 @@ export default function App() {
       a.download = "orden_trabajo.pdf";
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      alert("No se pudo conectar con el servidor.");
+
+      showToast("✅ PDF generado correctamente.", "success");
+    } catch (e) {
+      console.error("❌ Error de conexión:", e);
+      showToast("🚫 No se pudo conectar con el servidor.", "error");
     }
   };
 
   return (
-      <>
-  <div className="header-bar">Orden de Trabajo</div>
+    <>
+      <div className="header-bar">Orden de Trabajo</div>
 
-    <div className="form-container">
-      <h1>Orden de Trabajo</h1>
+      <div className="form-container">
+        <h1>Orden de Trabajo</h1>
 
-      {/* 🌓 Botón flotante de tema */}
-      <button className="theme-toggle" onClick={toggleTheme}>
-        {theme === "light" && "🌞"}
-        {theme === "dark" && "🌙"}
-        {theme === "system" && "🖥️"}
-      </button>
+        {/* 🌓 Botón flotante de tema */}
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {theme === "light" && "🌞"}
+          {theme === "dark" && "🌙"}
+          {theme === "system" && "🖥️"}
+        </button>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="form-body">
-        {/* Datos generales */}
-        <section className="section">
-          <h3>Datos generales</h3>
-          <div className="grid-2">
-            <label>
-              Fecha
-              <input type="date" {...register("fecha")} />
-            </label>
-            <label>
-              Centro de costos
-              <input type="text" {...register("centro_costos")} />
-            </label>
-            <label>
-              Ubicación
-              <input type="text" {...register("ubicacion")} />
-            </label>
-            <label>
-              Tipo de mantenimiento
-              <select {...register("tipo_mantenimiento")}>
-                <option>Preventivo</option>
-                <option>Correctivo</option>
-                <option>Obras nuevas</option>
-              </select>
-            </label>
-            <label>
-              Prioridad
-              <select {...register("prioridad")}>
-                <option>Normal</option>
-                <option>Urgente</option>
-              </select>
-            </label>
-          </div>
-        </section>
-
-        {/* Título y descripción */}
-        <section className="section">
-          <h3>Título de la tarea</h3>
-          <input
-            type="text"
-            className="full-input"
-            placeholder="Ej: Cambio de alimentador"
-            {...register("tarea")}
-          />
-        </section>
-
-        <section className="section">
-          <h3>Descripción de la tarea</h3>
-          <textarea
-            rows={5}
-            className="full-input"
-            placeholder="Describa las acciones realizadas..."
-            {...register("observaciones")}
-          />
-        </section>
-
-        {/* Tableros */}
-        <section className="section">
-          <h3>Tableros y Circuito</h3>
-          <label>Tableros intervenidos</label>
-          <Controller
-            name="tableros"
-            control={control}
-            render={({ field }) => (
-              <Select
-                isMulti
-                options={tableros}
-                placeholder="Buscar tablero..."
-                value={(field.value || []).map((v) => ({ value: v, label: v }))}
-                onChange={(vals) => field.onChange(vals.map((v) => v.value))}
-              />
-            )}
-          />
-          <label>Circuito</label>
-          <input
-            type="text"
-            className="full-input"
-            placeholder="FD2, alumbrado exterior…"
-            {...register("circuitos")}
-          />
-        </section>
-
-        {/* Horarios y técnicos */}
-        <section className="section">
-          <h3>Horarios y Técnicos</h3>
-          <div className="grid-2">
-            <label>
-              Hora inicio
-              <input type="time" {...register("hora_inicio")} />
-            </label>
-            <label>
-              Hora fin
-              <input type="time" {...register("hora_fin")} />
-            </label>
-          </div>
-
-          <h4>Legajos</h4>
-          {legajos.fields.map((f, idx) => (
-            <div key={f.id} className="flex-row">
-              <input placeholder="ID" {...register(`legajos.${idx}.id`)} />
-              <input
-                placeholder="Nombre"
-                {...register(`legajos.${idx}.nombre`)}
-              />
-              <button
-                type="button"
-                className="btn-remove"
-                onClick={() => legajos.remove(idx)}
-              >
-                ❌
-              </button>
+        <form onSubmit={handleSubmit(onSubmit)} className="form-body">
+          {/* Datos generales */}
+          <section className="section">
+            <h3>Datos generales</h3>
+            <div className="grid-2">
+              <label>
+                Fecha
+                <input type="date" {...register("fecha")} />
+              </label>
+              <label>
+                Centro de costos
+                <input type="text" {...register("centro_costos")} />
+              </label>
+              <label>
+                Ubicación
+                <input type="text" {...register("ubicacion")} />
+              </label>
+              <label>
+                Tipo de mantenimiento
+                <select {...register("tipo_mantenimiento")}>
+                  <option>Preventivo</option>
+                  <option>Correctivo</option>
+                  <option>Obras nuevas</option>
+                </select>
+              </label>
+              <label>
+                Prioridad
+                <select {...register("prioridad")}>
+                  <option>Normal</option>
+                  <option>Urgente</option>
+                </select>
+              </label>
             </div>
-          ))}
-          <button
-            type="button"
-            className="btn-add"
-            onClick={() => legajos.append({ id: "", nombre: "" })}
-          >
-            ➕ Agregar legajo
-          </button>
-        </section>
+          </section>
 
-        {/* Materiales */}
-        <section className="section">
-          <h3>Materiales</h3>
-          {materiales.fields.map((f, idx) => (
-            <div key={f.id} className="grid-4">
-              <input
-                placeholder="Material"
-                {...register(`materiales.${idx}.material`)}
-              />
-              <input
-                placeholder="Cant."
-                type="number"
-                step="0.01"
-                {...register(`materiales.${idx}.cant`)}
-              />
-              <input
-                placeholder="Unidad"
-                {...register(`materiales.${idx}.unidad`)}
-              />
-              <button
-                type="button"
-                className="btn-remove"
-                onClick={() => materiales.remove(idx)}
-              >
-                ❌
-              </button>
+          {/* Título y descripción */}
+          <section className="section">
+            <h3>Título de la tarea</h3>
+            <input
+              type="text"
+              className="full-input"
+              placeholder="Ej: Cambio de alimentador"
+              {...register("tarea")}
+            />
+          </section>
+
+          <section className="section">
+            <h3>Descripción de la tarea</h3>
+            <textarea
+              rows={5}
+              className="full-input"
+              placeholder="Describa las acciones realizadas..."
+              {...register("observaciones")}
+            />
+          </section>
+
+          {/* Tableros */}
+          <section className="section">
+            <h3>Tableros y Circuito</h3>
+            <label>Tableros intervenidos</label>
+            <Controller
+              name="tableros"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  isMulti
+                  options={tableros}
+                  placeholder="Buscar tablero..."
+                  value={(field.value || []).map((v) => ({
+                    value: v,
+                    label: v,
+                  }))}
+                  onChange={(vals) => field.onChange(vals.map((v) => v.value))}
+                />
+              )}
+            />
+            <label>Circuito</label>
+            <input
+              type="text"
+              className="full-input"
+              placeholder="FD2, alumbrado exterior…"
+              {...register("circuitos")}
+            />
+          </section>
+
+          {/* Horarios y técnicos */}
+          <section className="section">
+            <h3>Horarios y Técnicos</h3>
+            <div className="grid-2">
+              <label>
+                Hora inicio
+                <input type="time" {...register("hora_inicio")} />
+              </label>
+              <label>
+                Hora fin
+                <input type="time" {...register("hora_fin")} />
+              </label>
             </div>
-          ))}
-          <button
-            type="button"
-            className="btn-add"
-            onClick={() =>
-              materiales.append({ material: "", cant: 1, unidad: "un" })
-            }
-          >
-            ➕ Agregar material
-          </button>
-        </section>
 
-        {/* Botones finales */}
-        <div className="btn-group">
-          <button type="submit" className="btn-primary">
-            📄 Generar PDF
-          </button>
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => reset()}
-          >
-            🧹 Limpiar
-          </button>
-        </div>
-      </form>
-    </div>
-      </>
+            <h4>Legajos</h4>
+            {legajos.fields.map((f, idx) => (
+              <div key={f.id} className="flex-row">
+                <input placeholder="ID" {...register(`legajos.${idx}.id`)} />
+                <input
+                  placeholder="Nombre"
+                  {...register(`legajos.${idx}.nombre`)}
+                />
+                <button
+                  type="button"
+                  className="btn-remove"
+                  onClick={() => legajos.remove(idx)}
+                >
+                  ❌
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-add"
+              onClick={() => legajos.append({ id: "", nombre: "" })}
+            >
+              ➕ Agregar legajo
+            </button>
+          </section>
+
+          {/* Materiales */}
+          <section className="section">
+            <h3>Materiales</h3>
+            {materiales.fields.map((f, idx) => (
+              <div key={f.id} className="grid-4">
+                <input
+                  placeholder="Material"
+                  {...register(`materiales.${idx}.material`)}
+                />
+                <input
+                  placeholder="Cant."
+                  type="number"
+                  step="0.01"
+                  {...register(`materiales.${idx}.cant`)}
+                />
+                <input
+                  placeholder="Unidad"
+                  {...register(`materiales.${idx}.unidad`)}
+                />
+                <button
+                  type="button"
+                  className="btn-remove"
+                  onClick={() => materiales.remove(idx)}
+                >
+                  ❌
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn-add"
+              onClick={() =>
+                materiales.append({ material: "", cant: 1, unidad: "un" })
+              }
+            >
+              ➕ Agregar material
+            </button>
+          </section>
+
+          {/* Botones finales */}
+          <div className="btn-group">
+            <button type="submit" className="btn-primary">
+              📄 Generar PDF
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => reset()}
+            >
+              🧹 Limpiar
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
