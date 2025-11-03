@@ -166,6 +166,8 @@ export default function App() {
   const materiales = useFieldArray({ control, name: "materiales" });
 
   const onSubmit = async (data) => {
+    console.log("Datos que se envían al backend:", data);
+
     try {
       const res = await fetch(`${API}/api/ordenes/pdf`, {
         method: "POST",
