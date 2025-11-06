@@ -173,30 +173,26 @@ export default function App() {
   // ✅ Envío al backend
   const onSubmit = async (data) => {
     console.log("Datos que se envían al backend:", data);
-
     const payload = {
       fecha: data.fecha,
       ubicacion: data.ubicacion,
-      tablero:
-        Array.isArray(data.tableros) && data.tableros.length > 0
-          ? data.tableros[0]
-          : "",
+      tablero: data.tableros?.[0] || "", // 👈 toma el primero si elegiste uno
       circuito: data.circuitos || "",
       vehiculo: data.vehiculo || "",
-      km_inicial: data.km_inicial ? parseFloat(data.km_inicial) : null,
-      km_final: data.km_final ? parseFloat(data.km_final) : null,
-      tecnicos: (data.legajos || []).map((t) => ({
-        legajo: t.id?.toString() || "",
-        nombre: t.nombre || "",
+      km_inicial: Number(data.km_inicial) || 0,
+      km_final: Number(data.km_final) || 0,
+      tecnicos: (data.legajos || []).map((l) => ({
+        legajo: l.id?.toString() || "",
+        nombre: l.nombre || "",
       })),
       tarea_pedida: data.tarea_pedida || "",
       tarea_realizada: data.tarea_realizada || "",
       tarea_pendiente: data.tarea_pendiente || "",
       luminaria_equipos: data.luminaria_equipos || "",
       materiales: (data.materiales || []).map((m) => ({
-        material: m.material,
-        cant: m.cant ? parseFloat(m.cant) : null,
-        unidad: m.unidad || "",
+        material: m.material || "",
+        cant: Number(m.cant) || 0,
+        unidad: m.unidad || "unidad",
       })),
     };
 
