@@ -227,12 +227,17 @@ export default function App() {
       setBackendErrors(null); // ✅ limpiar errores si el PDF salió bien
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "orden_trabajo.pdf";
+
+      // 📱 Compatibilidad móvil
+      a.style.display = "none";
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
       showToast("✅ PDF generado correctamente.", "success");
     } catch (e) {

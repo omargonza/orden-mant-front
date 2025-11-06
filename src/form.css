@@ -1,10 +1,50 @@
-/* 🔵 ENCABEZADO FIJO SUPERIOR */
+/* ===============================
+   YOQUET DISEÑOS – FORMULARIO DE ORDEN
+   Profesional | Liviano | Móvil-first
+=================================== */
+
+/* 🎨 Paleta base */
+:root {
+  --color-primary: #004b8d;
+  --color-primary-light: #e6f0ff;
+  --color-bg: #f8f9fb;
+  --color-surface: #ffffff;
+  --color-border: #dcdcdc;
+  --color-text: #202020;
+  --color-muted: #666;
+  --color-success: #0057b8;
+  --shadow-soft: rgba(0, 0, 0, 0.08);
+}
+
+/* 🌑 Modo oscuro */
+.dark {
+  --color-primary: #90caf9;
+  --color-primary-light: #15202b;
+  --color-bg: #121212;
+  --color-surface: #1e1e1e;
+  --color-border: #2d2d2d;
+  --color-text: #f5f5f5;
+  --color-muted: #aaa;
+  --shadow-soft: rgba(255, 255, 255, 0.05);
+}
+
+/* 🧍 Estructura general */
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  padding-top: 70px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* 🔵 Encabezado fijo */
 .header-bar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 64px;
+  height: 60px;
   background: var(--color-primary);
   color: white;
   display: flex;
@@ -12,116 +52,77 @@
   justify-content: center;
   font-size: 1.2rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 100;
 }
 
-body {
-  padding-top: 70px; /* 🔹 deja espacio para el encabezado fijo */
-}
-/* 🌞🌙 FORMULARIO RESPONSIVE CON MODO OSCURO AUTOMÁTICO Y TARJETAS FLOTANTES */
-
-:root {
-  --color-bg: #f5f6fa;
-  --color-text: #222;
-  --color-primary: #0a4a87;
-  --color-secondary: #eaeaea;
-  --color-border: #ccc;
-  --color-box: #ffffff;
-  --color-btn-text: white;
-  --color-btn-add: #e6f2ff;
-  --color-btn-remove-bg: #ffebeb;
-  --color-btn-remove-text: #b00020;
-  --shadow-card: rgba(0, 0, 0, 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #121212;
-    --color-text: #f5f5f5;
-    --color-primary: #90caf9;
-    --color-secondary: #2c2c2c;
-    --color-border: #333;
-    --color-box: #1e1e1e;
-    --color-btn-text: #121212;
-    --color-btn-add: #1a2b3d;
-    --color-btn-remove-bg: #3a1f1f;
-    --color-btn-remove-text: #ef9a9a;
-    --shadow-card: rgba(255, 255, 255, 0.05);
-  }
-}
-
-body {
-  background: var(--color-bg);
-  font-family: "Inter", system-ui, sans-serif;
-  color: var(--color-text);
-  margin: 0;
-  padding: 0;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
+/* 📄 Contenedor principal */
 .form-container {
-  max-width: 850px;
-  margin: 16px auto;
-  padding: 20px;
-  background: var(--color-box);
+  max-width: 780px;
+  margin: 1.2rem auto;
+  background: var(--color-surface);
   border-radius: 16px;
-  box-shadow: 0 6px 14px var(--shadow-card);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px var(--shadow-soft);
+  padding: 20px 24px;
   box-sizing: border-box;
-  width: calc(100% - 32px); /* 🔹 evita que se pegue a los bordes */
 }
 
 h1 {
   text-align: center;
+  font-size: 1.6rem;
+  margin: 0 0 1rem 0;
   color: var(--color-primary);
-  font-size: 1.8rem;
-  margin-bottom: 18px;
 }
 
+/* 📦 Secciones */
 .section {
-  background: var(--color-box);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 6px var(--shadow-card);
+  padding: 16px;
   margin-bottom: 20px;
-  transition: background 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 6px var(--shadow-soft);
 }
 
 h3 {
   color: var(--color-primary);
-  margin-bottom: 10px;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
 }
 
+/* 🧾 Inputs */
 input,
 select,
 textarea {
   width: 100%;
   padding: 10px;
-  margin-top: 6px;
-  border-radius: 8px;
   border: 1px solid var(--color-border);
-  font-size: 1rem;
-  background: var(--color-box);
+  border-radius: 8px;
+  background: var(--color-surface);
   color: var(--color-text);
+  font-size: 1rem;
   box-sizing: border-box;
   transition: all 0.25s ease;
 }
 
-textarea {
-  resize: vertical;
-  min-height: 90px;
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
+/* 📱 Grillas adaptables */
 .grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
 .grid-4 {
   display: grid;
-  grid-template-columns: 1.6fr 0.8fr 0.8fr auto;
+  grid-template-columns: 2fr 1fr 1fr auto;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -129,9 +130,10 @@ textarea {
 .flex-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
+/* 🧩 Botones */
 .btn-add,
 .btn-remove,
 .btn-primary,
@@ -145,57 +147,48 @@ textarea {
 }
 
 .btn-add {
-  background: var(--color-btn-add);
+  background: var(--color-primary-light);
   color: var(--color-primary);
 }
-
 .btn-add:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.05);
 }
 
 .btn-remove {
-  background: var(--color-btn-remove-bg);
-  color: var(--color-btn-remove-text);
+  background: #ffeaea;
+  color: #c62828;
 }
-
 .btn-remove:hover {
-  filter: brightness(1.2);
+  background: #ffdede;
 }
 
 .btn-primary {
   background: var(--color-primary);
-  color: var(--color-btn-text);
+  color: white;
   width: 100%;
 }
-
 .btn-primary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 
 .btn-secondary {
-  background: var(--color-secondary);
+  background: var(--color-surface);
   color: var(--color-text);
+  border: 1px solid var(--color-border);
   width: 100%;
 }
-
 .btn-secondary:hover {
-  filter: brightness(1.15);
+  background: var(--color-primary-light);
 }
 
+/* 🔘 Grupo de botones */
 .btn-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  outline: 2px solid var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-/* 🌗 BOTÓN FLOTANTE DE TEMA CON TOOLTIP */
+/* 🌓 Botón flotante de tema */
 .theme-toggle {
   position: fixed;
   bottom: 18px;
@@ -208,60 +201,21 @@ textarea:focus {
   height: 52px;
   font-size: 1.5rem;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s, background 0.3s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.3s ease, background 0.3s ease;
   z-index: 999;
 }
-
 .theme-toggle:hover {
-  transform: scale(1.08);
-  background: #1565c0;
+  transform: scale(1.1);
 }
 
-.theme-toggle::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 60px;
-  right: 50%;
-  transform: translateX(50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  border-radius: 6px;
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  transition: opacity 0.25s ease;
-}
-
-.theme-toggle:hover::after {
-  opacity: 1;
-}
-
-/* 🌑 MODO OSCURO MANUAL */
-.dark {
-  --color-bg: #121212;
-  --color-text: #f5f5f5;
-  --color-primary: #90caf9;
-  --color-secondary: #2c2c2c;
-  --color-border: #444;
-  --color-box: #1e1e1e;
-  --color-btn-text: #121212;
-  --color-btn-add: #1a2b3d;
-  --color-btn-remove-bg: #3a1f1f;
-  --color-btn-remove-text: #ef9a9a;
-  --shadow-card: rgba(255, 255, 255, 0.05);
-}
-
-/* 📱 Responsive */
-@media (max-width: 600px) {
+/* 📱 Responsive total */
+@media (max-width: 768px) {
   .form-container {
     padding: 16px;
-    width: calc(100% - 24px);
+    width: calc(100% - 20px);
   }
 
-  .grid-2,
   .grid-4 {
     grid-template-columns: 1fr;
   }
@@ -271,30 +225,18 @@ textarea:focus {
     font-size: 1rem;
   }
 
-  .theme-toggle {
-    bottom: 14px;
-    right: 14px;
-    width: 48px;
-    height: 48px;
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
   }
 }
 
-/* ✨ Transición suave entre temas */
+/* ⚡ Transiciones suaves */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-.backend-error-box {
-  margin-top: 20px;
-  padding: 12px;
-  border: 2px solid #ff6961;
-  border-radius: 8px;
-  background: #ffecec;
-  color: #a33;
-  font-family: monospace;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.backend-error-box h4 {
-  margin: 0 0 5px;
-  font-weight: bold;
+  transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
 }
