@@ -115,11 +115,12 @@ const tableros = [
     ],
   },
 ];
+
 export default function App() {
-  const { showToast } = useToast(); // 👈 Hook del contexto de toasts
+  const { showToast } = useToast();
   const [theme, setTheme] = useState("system");
 
-  // 🔄 Detectar y aplicar tema guardado o automático
+  // 🔄 Tema
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved) setTheme(saved);
@@ -147,37 +148,48 @@ export default function App() {
   const { register, control, handleSubmit, reset } = useForm({
     defaultValues: {
       fecha: new Date().toISOString().slice(0, 10),
-      centro_costos: "",
       ubicacion: "",
-      tipo_mantenimiento: "Correctivo",
-      prioridad: "Normal",
-      tarea: "",
-      observaciones: "",
       tableros: [],
       circuitos: "",
-      hora_inicio: "08:00",
-      hora_fin: "12:00",
+      vehiculo: "",
+      km_inicial: "",
+      km_final: "",
       legajos: [{ id: "", nombre: "" }],
       materiales: [],
+      tarea_pedida: "",
+      tarea_realizada: "",
+      tarea_pendiente: "",
+      luminaria_equipos: "",
     },
   });
 
   const legajos = useFieldArray({ control, name: "legajos" });
   const materiales = useFieldArray({ control, name: "materiales" });
 
-  // ✅ Envío de datos al backend y descarga del PDF
+  // ✅ Envío al backend
   const onSubmit = async (data) => {
     console.log("Datos que se envían al backend:", data);
 
     const payload = {
-      ...data,
-      materiales: (data.materiales || []).map((m) => ({
-        ...m,
-        cant: m.cant === "" || m.cant == null ? null : Number(m.cant),
+      fecha: data.fecha,
+      ubicacion: data.ubicacion,
+      tablero: Array.isArray(data.tableros) && data.tableros.length > 0 ? data.tableros[0] : "",
+      circuito: data.circuitos || "",
+      vehiculo: data.vehiculo || "",
+      km_inicial: data.km_inicial ? parseFloat(data.km_inicial) : null,
+      km_final: data.km_final ? parseFloat(data.km_final) : null,
+      tecnicos: (data.legajos || []).map((t) => ({
+        legajo: t.id?.toString() || "",
+        nombre: t.nombre || "",
       })),
-      legajos: (data.legajos || []).map((l) => ({
-        id: l.id?.toString() || "",
-        nombre: l.nombre || "",
+      tarea_pedida: data.tarea_pedida || "",
+      tarea_realizada: data.tarea_realizada || "",
+      tarea_pendiente: data.tarea_pendiente || "",
+      luminaria_equipos: data.luminaria_equipos || "",
+      materiales: (data.materiales || []).map((m) => ({
+        material: m.material,
+        cant: m.cant ? parseFloat(m.cant) : null,
+        unidad: m.unidad || "",
       })),
     };
 
@@ -219,7 +231,7 @@ export default function App() {
       <div className="form-container">
         <h1>Orden de Trabajo</h1>
 
-        {/* 🌓 Botón flotante de tema */}
+        {/* 🌓 Botón de tema */}
         <button className="theme-toggle" onClick={toggleTheme}>
           {theme === "light" && "🌞"}
           {theme === "dark" && "🌙"}
@@ -236,56 +248,16 @@ export default function App() {
                 <input type="date" {...register("fecha")} />
               </label>
               <label>
-                Centro de costos
-                <input type="text" {...register("centro_costos")} />
-              </label>
-              <label>
                 Ubicación
                 <input type="text" {...register("ubicacion")} />
-              </label>
-              <label>
-                Tipo de mantenimiento
-                <select {...register("tipo_mantenimiento")}>
-                  <option>Preventivo</option>
-                  <option>Correctivo</option>
-                  <option>Obras nuevas</option>
-                </select>
-              </label>
-              <label>
-                Prioridad
-                <select {...register("prioridad")}>
-                  <option>Normal</option>
-                  <option>Urgente</option>
-                </select>
               </label>
             </div>
           </section>
 
-          {/* Título y descripción */}
-          <section className="section">
-            <h3>Título de la tarea</h3>
-            <input
-              type="text"
-              className="full-input"
-              placeholder="Ej: Cambio de alimentador"
-              {...register("tarea")}
-            />
-          </section>
-
-          <section className="section">
-            <h3>Descripción de la tarea</h3>
-            <textarea
-              rows={5}
-              className="full-input"
-              placeholder="Describa las acciones realizadas..."
-              {...register("observaciones")}
-            />
-          </section>
-
           {/* Tableros */}
           <section className="section">
-            <h3>Tableros y Circuito</h3>
-            <label>Tableros intervenidos</label>
+            <h3>Tablero y Circuito</h3>
+            <label>Tablero</label>
             <Controller
               name="tableros"
               control={control}
@@ -294,10 +266,7 @@ export default function App() {
                   isMulti
                   options={tableros}
                   placeholder="Buscar tablero..."
-                  value={(field.value || []).map((v) => ({
-                    value: v,
-                    label: v,
-                  }))}
+                  value={(field.value || []).map((v) => ({ value: v, label: v }))}
                   onChange={(vals) => field.onChange(vals.map((v) => v.value))}
                 />
               )}
@@ -311,33 +280,42 @@ export default function App() {
             />
           </section>
 
-          {/* Horarios y técnicos */}
+          {/* Vehículo y km */}
           <section className="section">
-            <h3>Horarios y Técnicos</h3>
-            <div className="grid-2">
+            <h3>Vehículo y kilómetros</h3>
+            <div className="grid-3">
               <label>
-                Hora inicio
-                <input type="time" {...register("hora_inicio")} />
+                Vehículo
+                <select {...register("vehiculo")}>
+                  <option value="">Seleccionar...</option>
+                  <option>AB101RS</option>
+                  <option>AE026TH</option>
+                  <option>AE026VN</option>
+                  <option>AF836WI</option>
+                  <option>AF078KP</option>
+                  <option>AH223LS</option>
+                  <option>AA801TV</option>
+                </select>
               </label>
               <label>
-                Hora fin
-                <input type="time" {...register("hora_fin")} />
+                Km inicial
+                <input type="number" step="0.1" {...register("km_inicial")} />
+              </label>
+              <label>
+                Km final
+                <input type="number" step="0.1" {...register("km_final")} />
               </label>
             </div>
+          </section>
 
-            <h4>Legajos</h4>
+          {/* Técnicos */}
+          <section className="section">
+            <h3>Técnicos</h3>
             {legajos.fields.map((f, idx) => (
               <div key={f.id} className="flex-row">
-                <input placeholder="ID" {...register(`legajos.${idx}.id`)} />
-                <input
-                  placeholder="Nombre"
-                  {...register(`legajos.${idx}.nombre`)}
-                />
-                <button
-                  type="button"
-                  className="btn-remove"
-                  onClick={() => legajos.remove(idx)}
-                >
+                <input placeholder="Legajo" {...register(`legajos.${idx}.id`)} />
+                <input placeholder="Nombre" {...register(`legajos.${idx}.nombre`)} />
+                <button type="button" className="btn-remove" onClick={() => legajos.remove(idx)}>
                   ❌
                 </button>
               </div>
@@ -347,8 +325,31 @@ export default function App() {
               className="btn-add"
               onClick={() => legajos.append({ id: "", nombre: "" })}
             >
-              ➕ Agregar legajo
+              ➕ Agregar técnico
             </button>
+          </section>
+
+          {/* Tareas */}
+          <section className="section">
+            <h3>Tareas</h3>
+            <label>Tarea pedida</label>
+            <input
+              type="text"
+              className="full-input"
+              placeholder="Ej: Reemplazo de luminarias..."
+              {...register("tarea_pedida")}
+            />
+            <label>Tarea realizada</label>
+            <textarea rows={4} className="full-input" {...register("tarea_realizada")} />
+            <label>Tarea pendiente</label>
+            <textarea rows={3} className="full-input" {...register("tarea_pendiente")} />
+            <label>Luminaria / Equipos encendidos</label>
+            <input
+              type="text"
+              className="full-input"
+              placeholder="Ej: NF1562 – 10 columnas encendidas"
+              {...register("luminaria_equipos")}
+            />
           </section>
 
           {/* Materiales */}
@@ -356,20 +357,14 @@ export default function App() {
             <h3>Materiales</h3>
             {materiales.fields.map((f, idx) => (
               <div key={f.id} className="grid-4">
-                <input
-                  placeholder="Material"
-                  {...register(`materiales.${idx}.material`)}
-                />
+                <input placeholder="Material" {...register(`materiales.${idx}.material`)} />
                 <input
                   placeholder="Cant."
                   type="number"
                   step="0.01"
                   {...register(`materiales.${idx}.cant`)}
                 />
-                <input
-                  placeholder="Unidad"
-                  {...register(`materiales.${idx}.unidad`)}
-                />
+                <input placeholder="Unidad" {...register(`materiales.${idx}.unidad`)} />
                 <button
                   type="button"
                   className="btn-remove"
@@ -383,23 +378,19 @@ export default function App() {
               type="button"
               className="btn-add"
               onClick={() =>
-                materiales.append({ material: "", cant: 1, unidad: "un" })
+                materiales.append({ material: "", cant: 1, unidad: "unidad" })
               }
             >
               ➕ Agregar material
             </button>
           </section>
 
-          {/* Botones finales */}
+          {/* Botones */}
           <div className="btn-group">
             <button type="submit" className="btn-primary">
               📄 Generar PDF
             </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => reset()}
-            >
+            <button type="button" className="btn-secondary" onClick={() => reset()}>
               🧹 Limpiar
             </button>
           </div>
