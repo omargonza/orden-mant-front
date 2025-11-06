@@ -236,6 +236,13 @@ export default function App() {
       a.style.display = "none";
       document.body.appendChild(a);
       a.click();
+      // Mostrar aviso visual al usuario (móvil friendly)
+      const toast = document.createElement("div");
+      toast.className = "toast-download";
+      toast.textContent = "📄 PDF generado y descargado correctamente";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
