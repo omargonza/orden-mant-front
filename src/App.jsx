@@ -131,7 +131,9 @@ export default function App() {
     if (theme === "dark") root.classList.add("dark");
     else if (theme === "light") root.classList.remove("dark");
     else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       if (prefersDark) root.classList.add("dark");
       else root.classList.remove("dark");
     }
@@ -166,6 +168,8 @@ export default function App() {
   const legajos = useFieldArray({ control, name: "legajos" });
   const materiales = useFieldArray({ control, name: "materiales" });
 
+  const [backendErrors, setBackendErrors] = useState(null);
+
   // ✅ Envío al backend
   const onSubmit = async (data) => {
     console.log("Datos que se envían al backend:", data);
@@ -173,7 +177,10 @@ export default function App() {
     const payload = {
       fecha: data.fecha,
       ubicacion: data.ubicacion,
-      tablero: Array.isArray(data.tableros) && data.tableros.length > 0 ? data.tableros[0] : "",
+      tablero:
+        Array.isArray(data.tableros) && data.tableros.length > 0
+          ? data.tableros[0]
+          : "",
       circuito: data.circuitos || "",
       vehiculo: data.vehiculo || "",
       km_inicial: data.km_inicial ? parseFloat(data.km_inicial) : null,
@@ -202,24 +209,26 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-    if (!res.ok) {
-  const text = await res.text(); // 👈 captura el texto original, sea JSON o no
-  let err;
-  try {
-    err = JSON.parse(text); // intenta parsear JSON
-  } catch {
-    err = { raw: text }; // si no es JSON, guarda el texto crudo
-  }
+      if (!res.ok) {
+        const text = await res.text();
+        let err;
+        try {
+          err = JSON.parse(text);
+        } catch {
+          err = { raw: text };
+        }
 
-  console.group("🚨 ERROR DEL BACKEND");
-  console.log("📩 Status:", res.status);
-  console.log("📨 Respuesta completa:", err);
-  console.groupEnd();
+        console.group("🚨 ERROR DEL BACKEND");
+        console.log("📩 Status:", res.status);
+        console.log("📨 Respuesta completa:", err);
+        console.groupEnd();
 
-  showToast("❌ Error al generar PDF. Revisá los datos.", "error");
-  return;
-}
+        setBackendErrors(err); // 👈 guardamos los errores para mostrarlos en pantalla
+        showToast("❌ Error al generar PDF. Revisá los datos.", "error");
+        return;
+      }
 
+      setBackendErrors(null); // ✅ limpiar errores si el PDF salió bien
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -278,7 +287,10 @@ export default function App() {
                   isMulti
                   options={tableros}
                   placeholder="Buscar tablero..."
-                  value={(field.value || []).map((v) => ({ value: v, label: v }))}
+                  value={(field.value || []).map((v) => ({
+                    value: v,
+                    label: v,
+                  }))}
                   onChange={(vals) => field.onChange(vals.map((v) => v.value))}
                 />
               )}
@@ -325,9 +337,19 @@ export default function App() {
             <h3>Técnicos</h3>
             {legajos.fields.map((f, idx) => (
               <div key={f.id} className="flex-row">
-                <input placeholder="Legajo" {...register(`legajos.${idx}.id`)} />
-                <input placeholder="Nombre" {...register(`legajos.${idx}.nombre`)} />
-                <button type="button" className="btn-remove" onClick={() => legajos.remove(idx)}>
+                <input
+                  placeholder="Legajo"
+                  {...register(`legajos.${idx}.id`)}
+                />
+                <input
+                  placeholder="Nombre"
+                  {...register(`legajos.${idx}.nombre`)}
+                />
+                <button
+                  type="button"
+                  className="btn-remove"
+                  onClick={() => legajos.remove(idx)}
+                >
                   ❌
                 </button>
               </div>
@@ -352,9 +374,17 @@ export default function App() {
               {...register("tarea_pedida")}
             />
             <label>Tarea realizada</label>
-            <textarea rows={4} className="full-input" {...register("tarea_realizada")} />
+            <textarea
+              rows={4}
+              className="full-input"
+              {...register("tarea_realizada")}
+            />
             <label>Tarea pendiente</label>
-            <textarea rows={3} className="full-input" {...register("tarea_pendiente")} />
+            <textarea
+              rows={3}
+              className="full-input"
+              {...register("tarea_pendiente")}
+            />
             <label>Luminaria / Equipos encendidos</label>
             <input
               type="text"
@@ -369,14 +399,20 @@ export default function App() {
             <h3>Materiales</h3>
             {materiales.fields.map((f, idx) => (
               <div key={f.id} className="grid-4">
-                <input placeholder="Material" {...register(`materiales.${idx}.material`)} />
+                <input
+                  placeholder="Material"
+                  {...register(`materiales.${idx}.material`)}
+                />
                 <input
                   placeholder="Cant."
                   type="number"
                   step="0.01"
                   {...register(`materiales.${idx}.cant`)}
                 />
-                <input placeholder="Unidad" {...register(`materiales.${idx}.unidad`)} />
+                <input
+                  placeholder="Unidad"
+                  {...register(`materiales.${idx}.unidad`)}
+                />
                 <button
                   type="button"
                   className="btn-remove"
@@ -402,7 +438,11 @@ export default function App() {
             <button type="submit" className="btn-primary">
               📄 Generar PDF
             </button>
-            <button type="button" className="btn-secondary" onClick={() => reset()}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => reset()}
+            >
               🧹 Limpiar
             </button>
           </div>
