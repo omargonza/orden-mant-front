@@ -202,12 +202,24 @@ export default function App() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error("❌ Error del backend:", err);
-        showToast("❌ Error al generar PDF. Revisá los datos.", "error");
-        return;
-      }
+    if (!res.ok) {
+  const text = await res.text(); // 👈 captura el texto original, sea JSON o no
+  let err;
+  try {
+    err = JSON.parse(text); // intenta parsear JSON
+  } catch {
+    err = { raw: text }; // si no es JSON, guarda el texto crudo
+  }
+
+  console.group("🚨 ERROR DEL BACKEND");
+  console.log("📩 Status:", res.status);
+  console.log("📨 Respuesta completa:", err);
+  console.groupEnd();
+
+  showToast("❌ Error al generar PDF. Revisá los datos.", "error");
+  return;
+}
+
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
