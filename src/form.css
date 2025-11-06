@@ -283,3 +283,18 @@ textarea:focus {
 * {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+.backend-error-box {
+  margin-top: 20px;
+  padding: 12px;
+  border: 2px solid #ff6961;
+  border-radius: 8px;
+  background: #ffecec;
+  color: #a33;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.backend-error-box h4 {
+  margin: 0 0 5px;
+  font-weight: bold;
+}

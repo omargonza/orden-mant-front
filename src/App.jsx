@@ -446,6 +446,12 @@ export default function App() {
               🧹 Limpiar
             </button>
           </div>
+          {backendErrors && (
+            <div className="backend-error-box">
+              <h4>⚠️ Errores del servidor:</h4>
+              <pre>{JSON.stringify(backendErrors, null, 2)}</pre>
+            </div>
+          )}
         </form>
       </div>
     </>
